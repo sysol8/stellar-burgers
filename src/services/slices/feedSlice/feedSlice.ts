@@ -5,12 +5,15 @@ import {
 } from '@reduxjs/toolkit';
 import { TOrder } from '@utils-types';
 import { getFeedsApi, getOrderByNumberApi } from '@api';
-import type { RootState } from '../store';
+import type { RootState } from '../../store';
 
-type ExtraState = {
+export type TFeedState = {
   orders: TOrder[];
   total: number;
   totalToday: number;
+};
+
+type ExtraState = {
   loading: boolean;
   error: string | null;
 };
@@ -20,7 +23,7 @@ const feedAdapter = createEntityAdapter<TOrder, number>({
   sortComparer: (a, b) => a.number - b.number
 });
 
-const initialState = feedAdapter.getInitialState<ExtraState>({
+const initialState = feedAdapter.getInitialState<ExtraState & TFeedState>({
   orders: [],
   total: 0,
   totalToday: 0,
