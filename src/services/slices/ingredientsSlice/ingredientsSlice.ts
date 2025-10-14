@@ -5,7 +5,7 @@ import {
 } from '@reduxjs/toolkit';
 import type { TIngredient } from '@utils-types';
 import { getIngredientsApi } from '@api';
-import { RootState } from '../store';
+import { RootState } from '../../store';
 
 const ingredientsAdapter = createEntityAdapter({
   selectId: (ingredient: TIngredient) => ingredient._id,
