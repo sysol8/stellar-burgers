@@ -11,7 +11,7 @@ import {
   TRegisterData
 } from '@api';
 import { TUser } from '@utils-types';
-import { deleteCookie, setCookie } from '../../utils/cookie';
+import { deleteCookie, setCookie } from '../../../utils/cookie';
 
 interface IUserState {
   user: TUser | null;

@@ -34,7 +34,7 @@ import { getIngredients } from '@slices';
 import { useEffect } from 'react';
 import { getCookie } from '../../utils/cookie';
 
-function AppShell() {
+export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as { background?: Location };

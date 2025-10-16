@@ -9,10 +9,10 @@ import {
   TIngredient,
   TConstructorItems
 } from '@utils-types';
-import { swapItemsInArray } from '../../utils/utils';
-import { createOrder } from './orderSlice';
+import { swapItemsInArray } from '../../../utils/utils';
+import { createOrder } from '../orderSlice/orderSlice';
 
-interface IBurgerConstructorState {
+export interface IBurgerConstructorState {
   constructorItems: TConstructorItems;
 }
 
@@ -55,12 +55,13 @@ const burgerConstructorSlice = createSlice({
     moveIngredientUp: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       const ingredients = state.constructorItems.ingredients;
-      if (index > 0) swapItemsInArray(ingredients, index, index - 1);
+      if (index > 0 && index < ingredients.length)
+        swapItemsInArray(ingredients, index, index - 1);
     },
     moveIngredientDown: (state, action: PayloadAction<number>) => {
       const index = action.payload;
       const ingredients = state.constructorItems.ingredients;
-      if (index < state.constructorItems.ingredients.length - 1)
+      if (index >= 0 && index < state.constructorItems.ingredients.length - 1)
         swapItemsInArray(ingredients, index, index + 1);
     }
   },
