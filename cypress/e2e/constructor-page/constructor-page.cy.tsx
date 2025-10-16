@@ -11,7 +11,7 @@ beforeEach(() => {
     { fixture: 'user.json' }
   ).as('getUser');
 
-  cy.visit('http://localhost:4000', {
+  cy.visit('/', {
     onBeforeLoad(win: Cypress.AUTWindow) {
       win.localStorage.setItem('refreshToken', 'rt-123456');
       win.document.cookie = 'accessToken=Bearer at-abcdef';
@@ -19,6 +19,10 @@ beforeEach(() => {
   });
 
   cy.get('[data-cy=ingredients-list]').should('have.length.greaterThan', 0);
+
+  cy.get('[data-cy=ingredient-card]').as('ingredient');
+  cy.get('@ingredient').not('[data-cy-type=ingredient-type-bun]').as('notBun');
+  cy.get('[data-cy-type=ingredient-type-bun]').as('bun');
 });
 
 afterEach(() => {
@@ -28,29 +32,46 @@ afterEach(() => {
 
 describe('Страница конструктора бургера', () => {
   it('Добавляет один или несколько ингредиентов в конструктор', () => {
-    cy.get('[data-cy-type=ingredient-type-bun]').first().find('button').click();
+    cy.get('[data-cy=burger-constructor]').as('burgerConstructor');
 
-    cy.get('[data-cy=ingredient-card]')
-      .not('[data-cy-type=ingredient-type-bun]')
-      .each((card: any, i: number) => {
-        if (i >= 5) return false;
-        cy.wrap(card).scrollIntoView().find('button').click();
+    cy.get('@bun').first().as('firstBun');
+    cy.get('@firstBun')
+      .getIngredientName()
+      .then((name) => {
+        cy.get('@firstBun').find('button').click();
+        cy.get('@burgerConstructor').should('contain.text', name);
       });
+
+    cy.get('@notBun').each((card: any, i: number) => {
+      if (i >= 5) return false;
+
+      cy.wrap(card)
+        .getIngredientName()
+        .then((name) => {
+          cy.wrap(card).find('button').click();
+          cy.get('@burgerConstructor').should('contain.text', name);
+        });
+    });
   });
 
   it('Открывает и закрывает модальные окна по клику на кнопку закрытия или вне модального окна', () => {
     cy.get('#modals').should('exist');
 
-    cy.get('[data-cy=ingredient-card]').first().click();
+    cy.get('@ingredient').first().as('firstIngredient');
 
-    cy.get('[data-cy=modal]').as('modal').should('be.visible');
+    cy.get('@firstIngredient')
+      .getIngredientName()
+      .then((name) => {
+        cy.get('@firstIngredient').click();
+        cy.get('[data-cy=modal]').as('ingredientModal');
+        cy.get('@ingredientModal')
+          .should('be.visible')
+          .should('contain.text', name);
+      });
+    cy.get('@ingredientModal').find('button').click();
 
-    cy.get('@modal').find('button').click();
-
-    cy.get('[data-cy=ingredient-card]').first().click();
-
-    cy.get('@modal').should('be.visible');
-
+    cy.get('@firstIngredient').click();
+    cy.get('@ingredientModal').should('be.visible');
     cy.get('[data-cy=modal-overlay]').click(50, 50, { force: true });
   });
 
@@ -60,34 +81,33 @@ describe('Страница конструктора бургера', () => {
       req.reply({ fixture: 'order.json' });
     }).as('createOrder');
 
-    cy.get('[data-cy=constructor-no-buns]').should('exist');
-    cy.get('[data-cy=constructor-no-ingredients]').should('exist');
+    cy.get('[data-cy=constructor-no-buns]')
+      .as('constructorWithNoBuns')
+      .should('exist');
+    cy.get('[data-cy=constructor-no-ingredients]')
+      .as('constructorWithNoIngredients')
+      .should('exist');
 
-    cy.get('[data-cy-type=ingredient-type-bun]').first().find('button').click();
+    cy.fillBurgerConstructor('@bun', '@notBun');
 
-    cy.get('[data-cy=ingredient-card]')
-      .not('[data-cy-type=ingredient-type-bun]')
-      .each((card: any, i: number) => {
-        if (i >= 5) return false;
-        cy.wrap(card).scrollIntoView().find('button').click();
-      });
-
-    cy.get('[data-cy=constructor-no-buns]').should('not.exist');
-    cy.get('[data-cy=constructor-no-ingredients]').should('not.exist');
+    cy.get('@constructorWithNoBuns').should('not.exist');
+    cy.get('@constructorWithNoIngredients').should('not.exist');
 
     cy.get('[data-cy=create-order]').scrollIntoView().click();
+
+    cy.get('[data-cy=modal]').as('orderModal');
 
     cy.wait('@createOrder').then(({ response }: any) => {
       const orderNumber = response.body.order.number;
 
-      cy.get('[data-cy=modal]').as('modal').should('be.visible');
+      cy.get('@orderModal').should('be.visible');
       cy.get('[data-cy=order-number]').should('have.text', orderNumber);
 
-      cy.get('@modal').find('button').click();
-      cy.get('@modal').should('not.exist');
+      cy.get('@orderModal').find('button').click();
+      cy.get('@orderModal').should('not.exist');
 
-      cy.get('[data-cy=constructor-no-buns]').should('exist');
-      cy.get('[data-cy=constructor-no-ingredients]').should('exist');
+      cy.get('@constructorWithNoBuns').should('exist');
+      cy.get('@constructorWithNoIngredients').should('exist');
     });
   });
 });
